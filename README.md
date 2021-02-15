@@ -13,12 +13,12 @@ In this project, we are going to track the real time updates on [Wikipedia](http
 ```
 pip install sseclient
 ```
-or just run the below command
+or just run the below command in terminal
 ```
 pip install -r requirements.txt
 ```
 # Running our code
-- If you want to run the code on [Jupyter Notebooks](https://jupyter.org/try). Just copy paste the [main.py]() in the notebook and just run the code.
+- If you want to run the code on [Jupyter Notebooks](https://jupyter.org/try). Just copy paste the [main.py](main.py) in the notebook and just run the code.
 > **Note:** Before running the code make sure that you installed [sseclient](https://pypi.org/project/sseclient/) package. In case, If you are installed, [click here](#requirements) to out the command to install the package.
 - ## Running on Terminal
 - Just open the Terminal, and navigate to the directory, where main.py belongs and just run the below command.
