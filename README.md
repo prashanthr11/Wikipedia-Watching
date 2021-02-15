@@ -27,9 +27,9 @@ python main.py
 ```
 
 - ## Running on IDE's
-- Copy main.py and paste it in your IDE and run the code.
+- Copy [main.py](main.py) and paste it in your IDE and run the code.
 ```
 python main.py
 ```
 # Conclusion
-- In this project, we are generating the reports for domains as well as users updates. In other words, we keep track of how many pages in domains and who is updating and how many edits the user has been made for each minute. In the above program, I'm assuming that I have generated report for 60 seconds and keep track of previous 5 minutes. At every minute, I have generated both domains and users report. Feel free to change the values, and play with them. 
+- In this project, we are generating the reports for domains as well as users updates. In other words, we keep track of how many pages in domains and who is updating and how many edits the user has been made for each minute. In the [above program](main.py), I'm assuming that I have generated report for every 60 seconds and keep track of records from previous 5 minutes. At every minute, I have generated both domains and users report. Feel free to change the values, and play with them.
