@@ -150,8 +150,7 @@ def main():
             break  # When we exceed the limit which is 5 minutes in this case
         domain, user = generate_report()
         reports.append(Weekly_Reports(domain, user))
-        while len(
-                reports) > 5:  # There is no need to store the previous data, as we are only concerned with the past 5
+        while len(reports) > 5:  # There is no need to store the previous data, as we are only concerned with the past 5
             # minutes. So, we just remove the unused data.
             reports.popleft()
 
