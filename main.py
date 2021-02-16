@@ -3,13 +3,13 @@ from sseclient import SSEClient as EventSource
 from collections import defaultdict
 from collections import deque
 from datetime import *
+from multiprocessing import Process
 
 
 class Weekly_Reports:
     """
     A Class to store the previous domains reports and users reports.
     """
-
     def __init__(self, domains=None, user=None):
         self.domains = domains
         self.users = user
@@ -25,7 +25,7 @@ def print_user_report(minutes, reports):
     start = 0 if minutes <= 5 else minutes - 5
     end = minutes
     tmp = defaultdict(int)  # Temporary dictionary for storing the users values (edit count).
-    print("Minute {0} Report - Minute {1}-{2} date\n".format(end, start, end))
+    print("Minute {0} Report - Minute {1}-{2} data\n".format(end, start, end))
     print("Users who made changes to en.wikipedia.org")
     print("-----------------------------------")
     print(''' Users Report ''')
@@ -34,7 +34,7 @@ def print_user_report(minutes, reports):
             tmp[v] = max(tmp[v], i.users[v])
 
     # Sorting the data on values(Edit count).
-    for k, v in sorted(tmp.items(), key=lambda v: v[1], reverse=True):
+    for k, v in sorted(tmp.items(), key=lambda value: value[1], reverse=True):
         if v != 0:
             print("{0}: {1}".format(k, v))
 
@@ -48,7 +48,7 @@ def print_domain_report(minutes, reports):
     start = 0 if minutes <= 5 else minutes - 5
     end = minutes
     tmp = defaultdict(int)
-    print("Minute {0} Report - Minute {1}-{2} date\n".format(end, start, end))
+    print("Minute {0} Report - Minute {1}-{2} data\n".format(end, start, end))
     for i in reports:  # For each report from the last 5 reports
         for v in i.domains:  # Iterate through the domains which are updated on each report.
             tmp[v] = max(tmp[v], i.domains[v])
@@ -58,7 +58,7 @@ def print_domain_report(minutes, reports):
     print(''' Domains Report ''')
 
     # Sorting the dictionary on unique pages updated.
-    for k, v in sorted(tmp.items(), key=lambda v: v[1], reverse=True):
+    for k, v in sorted(tmp.items(), key=lambda value: value[1], reverse=True):
         print("{0}: {1} pages updated".format(k, v))
 
     print("-----------------------------------")
@@ -69,7 +69,7 @@ def helper(change):
     This function takes the json file as input and return the the list which consists of name of the domain, userid,
     title of the page updated.
     User name and edit count will be returned only when the user is not bot and the domain is en.wikipedia.org. Only, In
-    this occassion, function returns list of length 5. which includes userid, title of the page, domain name, user name
+    this occasion, function returns list of length 5. which includes userid, title of the page, domain name, user name
     and the edit count.
     """
     required = ["meta", "performer"]
@@ -93,8 +93,8 @@ def helper(change):
 
 def found(d, domain, pid, title):
     """
-    This function Returns True only when there are no duplicates in the domain at d. In other words, Either the id or the
-    title of the page is present in the domain[d] which is already updated is ignored.
+    This function Returns True only when there are no duplicates in the domain at d. In other words, Either the id or
+    the title of the page is present in the domain[d] which is already updated is ignored.
     """
     for k, v in domain[d]:
         if k == pid or v == title:
@@ -115,8 +115,6 @@ def generate_report():
     for event in EventSource(url):  # Iterating through the events in the url.
         tmp = datetime.now() - now
         if tmp.seconds > 60:  # If we exceed one minute just return the domains and users dictionaries.
-            for i in domain:
-                domain[i] = len(domain[i])  # Converting the values of the dictionaries to the length of the set.
             return (domain, user)
         if event.event == 'message':
             try:
@@ -137,6 +135,29 @@ def generate_report():
     return (domain, user)
 
 
+def print_reports(reports, minutes_cnt):
+    """
+    This Function to always maintains the length of the reports at most 5. Also, calls the functions for printing
+    the domains and users reports.
+    """
+    while len(reports) > 5:  # There is no need to store the previous data, as we are only concerned with the past 5
+        # minutes. So, we just remove the unused data.
+        reports.popleft()
+
+    print_user_report(minutes_cnt, reports)  # function for generating the users report.
+    print_domain_report(minutes_cnt, reports)  # function for generating the domains report.
+
+
+def change_domain_values(domain):
+    """
+    This functions changes the values in the dictionary to length of the set of each domain.
+    """
+    for i in domain:
+        domain[i] = len(domain[i])  # Converting the values of the dictionaries to the length of the set.
+
+    return domain
+
+
 def main():
     minutes_cnt = 0
     reports = deque()
@@ -149,17 +170,19 @@ def main():
         if tmp.seconds > limit:
             break  # When we exceed the limit which is 5 minutes in this case
         domain, user = generate_report()
-        reports.append(Weekly_Reports(domain, user))
-        while len(reports) > 5:  # There is no need to store the previous data, as we are only concerned with the past 5
-            # minutes. So, we just remove the unused data.
-            reports.popleft()
-
+        process1 = Process(target=generate_report)  # As soon as the upper bound for the time of 1 minute
+        # exceeds this process again calls the generate_report function.
+        process1.start()
         minutes_cnt += 1
-        print_user_report(minutes_cnt, reports)  # function for generating the users report.
-        print_domain_report(minutes_cnt, reports)  # function for generating the domains report.
+        domain = change_domain_values(domain)
+        reports.append(Weekly_Reports(domain, user))
+        process2 = Process(target=print_reports, args=(reports, minutes_cnt))
+        process2.start()
+        process1.join()
+        process2.join()
 
     print("End of Report!!")
-    
+
 
 if __name__ == '__main__':
     main()
