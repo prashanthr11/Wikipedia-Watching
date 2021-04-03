@@ -18,11 +18,11 @@ class Weekly_Reports:
 url = 'https://stream.wikimedia.org/v2/stream/revision-create'
 
 
-def print_user_report(minutes, reports):
+def print_user_report(minutes, reports, limit):
     """
     Template for printing Users Report.
     """
-    start = 0 if minutes <= 5 else minutes - 5
+    start = 0 if minutes <= limit else minutes - limit
     end = minutes
     tmp = defaultdict(int)  # Temporary dictionary for storing the users values (edit count).
     print("Minute {0} Report - Minute {1}-{2} data\n".format(end, start, end))
@@ -41,11 +41,11 @@ def print_user_report(minutes, reports):
     print("-----------------------------------")
 
 
-def print_domain_report(minutes, reports):
+def print_domain_report(minutes, reports, limit):
     """
     Template for printing Domains Report.
     """
-    start = 0 if minutes <= 5 else minutes - 5
+    start = 0 if minutes <= limit else minutes - limit
     end = minutes
     tmp = defaultdict(int)
     print("Minute {0} Report - Minute {1}-{2} data\n".format(end, start, end))
@@ -124,7 +124,7 @@ def generate_report():
                     pid, title, d = res
                 else:
                     pid, title, d, name, cnt = res
-                    user[name] = max(user[name], cnt)  # update the users dicti0nary with the maximum edit counts.
+                    user[name] = max(user[name], cnt)  # update the users dictionary with the maximum edit counts.
 
                 if found(d, domain, pid, title):  # if the user id or the title of the page is already present in the
                     # same domain.
@@ -135,17 +135,17 @@ def generate_report():
     return (domain, user)
 
 
-def print_reports(reports, minutes_cnt):
+def print_reports(reports, minutes_cnt, limit):
     """
     This Function to always maintains the length of the reports at most 5. Also, calls the functions for printing
     the domains and users reports.
     """
-    while len(reports) > 5:  # There is no need to store the previous data, as we are only concerned with the past 5
+    while len(reports) > limit:  # There is no need to store the previous data, as we are only concerned with the past 5
         # minutes. So, we just remove the unused data.
         reports.popleft()
 
-    print_user_report(minutes_cnt, reports)  # function for generating the users report.
-    print_domain_report(minutes_cnt, reports)  # function for generating the domains report.
+    print_user_report(minutes_cnt, reports, limit)  # function for generating the users report.
+    print_domain_report(minutes_cnt, reports, limit)  # function for generating the domains report.
 
 
 def change_domain_values(domain):
@@ -161,7 +161,7 @@ def change_domain_values(domain):
 def main():
     minutes_cnt = 0
     reports = deque()
-    limit = 10  # Time in minutes
+    limit = 5  # Time in minutes
     limit *= 60  # Converting limit to seconds
     now = datetime.now()  # Store present time
 
@@ -176,7 +176,7 @@ def main():
         minutes_cnt += 1
         domain = change_domain_values(domain)
         reports.append(Weekly_Reports(domain, user))
-        process2 = Process(target=print_reports, args=(reports, minutes_cnt))
+        process2 = Process(target=print_reports, args=(reports, minutes_cnt, limit))
         process2.start()
         process1.join()
         process2.join()
